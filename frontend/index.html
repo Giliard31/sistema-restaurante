@@ -28,7 +28,11 @@
         .box-auth { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-top: 20px; }
         .link-toggle { color: #ff4757; cursor: pointer; text-align: center; display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
         .secao-cadastro { display: none; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
-        .cronometro-regressivo { font-size: 16px; font-weight: bold; color: #ff4757; margin-top: 5px; }
+        .cronometro-regressivo { font-size: 15px; font-weight: bold; color: #ff4757; margin-top: 5px; }
+        
+        /* Modal customizado elegante (Sem "A página diz") */
+        #modal-aviso { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-conteudo { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -38,11 +42,18 @@
         <button id="btn-instalar">Instalar</button>
     </div>
 
+    <div id="modal-aviso">
+        <div class="modal-conteudo">
+            <h3 id="modal-titulo" style="color: #ff4757; margin-top: 0;">Aviso</h3>
+            <p id="modal-texto" style="margin: 15px 0; color: #444; font-size: 15px;"></p>
+            <button class="btn-acao" onclick="fecharModalAviso()">OK</button>
+        </div>
+    </div>
+
     <header>
         <span id="titulo-topo">🍔 Delícias da Casa</span>
     </header>
 
-    <!-- TELA 1: LOGIN / CADASTRO -->
     <div id="tela-login" class="container tela ativa">
         <div class="box-auth">
             <h2 style="text-align: center; color: #ff4757; margin-top: 0;">Faça o seu Login</h2>
@@ -73,7 +84,6 @@
         </div>
     </div>
 
-    <!-- TELA ESQUECI SENHA -->
     <div id="tela-esqueci" class="container tela">
         <div class="box-auth">
             <h2 style="color: #ff4757; text-align: center;">Recuperar Senha</h2>
@@ -89,7 +99,6 @@
         </div>
     </div>
 
-    <!-- TELA 2: CARDÁPIO DO CLIENTE -->
     <div id="tela-cardapio" class="container tela">
         <h2>Cardápio Disponível</h2>
         <button onclick="fazerLogout()" style="background:#666; color:white; border:none; padding:8px 12px; border-radius:5px; margin-bottom:15px; cursor:pointer;">Sair da Conta</button>
@@ -98,29 +107,49 @@
         <div id="meus-pedidos">Nenhum pedido recente.</div>
     </div>
 
-    <!-- TELA 3: PAINEL ADMINISTRADOR -->
+    <div id="tela-checkout" class="container tela">
+        <div class="box-auth">
+            <h2 style="color: #ff4757; text-align: center; margin-top: 0;">Finalizar Pagamento</h2>
+            <div id="resumo-carrinho-checkout" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px;"></div>
+
+            <div id="bloco-pix" style="display:none;">
+                <p style="font-size: 14px; font-weight: bold; color: #333;">Pagamento via Pix (Chave do Estabelecimento):</p>
+                <div style="background: #e1b12c33; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; word-break: break-all; margin-bottom: 10px;" id="texto-chave-pix"></div>
+                <button class="btn-acao" style="background: #ffa502; margin-bottom: 10px;" onclick="copiarChavePix()">📋 Copiar Chave Pix</button>
+                <p style="font-size: 12px; color: #666; text-align: center;">Abra o aplicativo do seu banco, faça o Pix com o valor total e depois clique no botão abaixo.</p>
+                <button class="btn-acao" style="background: #2ed573;" onclick="concluirEnvioPix()">Já fiz o pagamento (Enviar Pedido)</button>
+            </div>
+
+            <div id="bloco-dinheiro" style="display:none;">
+                <label style="font-size: 14px; font-weight: bold;">Vai precisar de troco para quanto?</label>
+                <input type="text" id="input-troco" placeholder="Ex: R$ 50,00 ou Não preciso de troco">
+                <button class="btn-acao" style="background: #2ed573; margin-top: 10px;" onclick="concluirEnvioDinheiro()">Enviar Pedido em Dinheiro</button>
+            </div>
+
+            <button onclick="mudarTela('tela-cardapio')" style="background:none; border:none; color:#666; width:100%; margin-top:15px; cursor:pointer;">← Voltar ao Cardápio</button>
+        </div>
+    </div>
+
     <div id="tela-admin" class="container tela">
         <h2>Painel do Administrador ⚙️</h2>
         <button onclick="fazerLogout()" style="background:#eb4d4b; color:white; border:none; padding:8px 12px; border-radius:5px; margin-bottom:15px; cursor:pointer;">Sair / Trocar Conta</button>
         
-        <!-- Configurar Taxa e Chave Pix -->
         <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
             <h3>Configurações de Pagamento e Entrega</h3>
-            <label>Chave Pix (Ex: seuemail@gmail.com ou CNPJ/Telefone):</label>
+            <label>Chave Pix:</label>
             <input type="text" id="admin-chave-pix" placeholder="Sua Chave Pix">
-            <label>Nome do Titular do Pix:</label>
+            <label>Nome do Titular:</label>
             <input type="text" id="admin-nome-pix" placeholder="Seu Nome">
             <label>Taxa de Entrega (R$):</label>
             <input type="number" step="0.50" id="admin-taxa" placeholder="Ex: 5.00 ou 0">
             <button class="btn-acao" style="margin-top: 5px;" onclick="salvarConfigLoja()">Salvar Configurações</button>
         </div>
 
-        <!-- Adicionar Novo Prato (Câmera ou Galeria) -->
         <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
             <h3>Adicionar Prato (Câmera / Galeria)</h3>
-            <input type="text" id="novo-nome" placeholder="Nome do Prato (Ex: Pizza Calabresa)">
+            <input type="text" id="novo-nome" placeholder="Nome do Prato">
             <input type="number" step="0.10" id="novo-preco" placeholder="Preço (Ex: 45.00)">
-            <label style="font-size: 13px; color: #666; display: block; margin-top: 5px;">Tirar foto com a câmera ou escolher da galeria:</label>
+            <label style="font-size: 13px; color: #666; display: block; margin-top: 5px;">Foto do prato:</label>
             <input type="file" id="novo-foto-file" accept="image/*" capture="environment" style="margin: 5px 0 10px 0;">
             <button class="btn-acao" style="background: #2ed573;" onclick="cadastrarNovoPratoComFoto()">Adicionar Prato</button>
         </div>
@@ -132,12 +161,10 @@
         <div id="admin-pedidos">Nenhum pedido no momento.</div>
     </div>
 
-    <!-- Carrinho Flutuante -->
-    <div id="btn-carrinho" class="carrinho-flutuante" onclick="abrirCheckout()">
+    <div id="btn-carrinho" class="carrinho-flutuante" onclick="irParaCheckout()">
         🛒 Ver Carrinho (<span id="contador-carrinho">0</span>)
     </div>
 
-    <!-- Socket.io -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         const SOCKET_URL = 'https://sistema-restaurante-rn2m.onrender.com';
@@ -149,8 +176,17 @@
         let carrinho = [];
         let pedidosGlobal = [];
         let configLoja = { taxaEntrega: 0, chavePix: "", nomePix: "" };
-        let imagemBase64Temp = "";
         let deferredPrompt;
+
+        // Substituição limpa de alert
+        function mostrarAviso(titulo, texto) {
+            document.getElementById('modal-titulo').innerText = titulo;
+            document.getElementById('modal-texto').innerText = texto;
+            document.getElementById('modal-aviso').style.display = 'flex';
+        }
+        function fecharModalAviso() {
+            document.getElementById('modal-aviso').style.display = 'none';
+        }
 
         function mudarTela(idTela) {
             document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
@@ -193,11 +229,11 @@
                 senha: document.getElementById('cad-senha').value
             };
             if(!dados.nome || !dados.email || !dados.senha || !dados.bairro) {
-                alert('Preencha os campos obrigatórios!');
+                mostrarAviso('Atenção', 'Preencha os campos obrigatórios!');
                 return;
             }
             socket.emit('cadastrar_usuario', dados, (res) => {
-                alert(res.mensagem);
+                mostrarAviso('Cadastro', res.mensagem);
                 if(res.sucesso) {
                     usuarioLogado = dados;
                     tipoUsuario = dados.email.startsWith('administrador@') ? 'admin' : 'cliente';
@@ -229,7 +265,7 @@
                     }
                     mudarTela(tipoUsuario === 'admin' ? 'tela-admin' : 'tela-cardapio');
                 } else {
-                    alert(res.mensagem);
+                    mostrarAviso('Erro no Login', res.mensagem);
                 }
             });
         }
@@ -237,7 +273,7 @@
         function abrirEsqueciSenha() { mudarTela('tela-esqueci'); }
         function enviarPedidoRecuperacao() {
             socket.emit('recuperar_senha', document.getElementById('esq-email').value, (res) => {
-                alert(res.mensagem);
+                mostrarAviso('Recuperação', res.mensagem);
                 if(res.sucesso) document.getElementById('bloco-redefinir').style.display = 'block';
             });
         }
@@ -247,7 +283,7 @@
                 codigo: document.getElementById('esq-codigo').value,
                 novaSenha: document.getElementById('esq-novasenha').value
             }, (res) => {
-                alert(res.mensagem);
+                mostrarAviso('Senha', res.mensagem);
                 if(res.sucesso) mudarTela('tela-login');
             });
         }
@@ -305,35 +341,58 @@
                 carrinho.push(item);
                 document.getElementById('contador-carrinho').innerText = carrinho.length;
                 document.getElementById('btn-carrinho').style.display = 'block';
-                alert(`${item.nome} adicionado ao carrinho!`);
+                mostrarAviso('Carrinho', `${item.nome} adicionado com sucesso!`);
             }
         }
 
-        // Checkout com Pix Automático (Valor Embutido)
-        function abrirCheckout() {
-            if(carrinho.length === 0) return;
-            let subtotal = carrinho.reduce((soma, i) => soma + i.preco, 0);
-            let taxa = configLoja.taxaEntrega;
-            let total = subtotal + taxa;
-            let nomesItens = carrinho.map(i => i.nome).join(', ');
-            
-            let formaPagamento = prompt(`Total do Pedido: R$ ${total.toFixed(2)} (Incluso R$ ${taxa.toFixed(2)} de entrega)\n\nComo deseja pagar?\n1 - Pix Automático (Copia e Cola com Valor)\n2 - Dinheiro (Com troco)`);
-            
-            let pagamentoTexto = "";
-            if(formaPagamento === '1') {
-                // Simulação inteligente de Payload Pix com valor exato embutido
-                let pixPayloadExato = `00020126580014br.gov.bcb.pix0136${configLoja.chavePix}5204000053039865802BR5925${configLoja.nomePix}6009PACAJUS62070503***6304`;
-                
-                let copiaECola = prompt(`📋 COPXE E COLA SEU PIX (Valor já embutido: R$ ${total.toFixed(2)}):\n\n${pixPayloadExato}\n\nCopie o código acima, abra o seu banco na opção Pix Copia e Cola e cole. O valor de R$ ${total.toFixed(2)} já vai vir pronto!\n\nDigite 'ok' após pagar para enviar o pedido:`);
-                if(!copiaECola) return;
-                pagamentoTexto = `Pix Automático (R$ ${total.toFixed(2)})`;
-            } else if(formaPagamento === '2') {
-                let troco = prompt('Vai precisar de troco para quanto? (Ex: R$ 50,00 ou Não)');
-                pagamentoTexto = `Dinheiro (Troco para: ${troco})`;
-            } else {
-                return;
-            }
+        let totalAtualCheckout = 0;
+        let subtotalAtualCheckout = 0;
+        let taxaAtualCheckout = 0;
 
+        function irParaCheckout() {
+            if(carrinho.length === 0) return;
+            subtotalAtualCheckout = carrinho.reduce((soma, i) => soma + i.preco, 0);
+            taxaAtualCheckout = configLoja.taxaEntrega;
+            totalAtualCheckout = subtotalAtualCheckout + taxaAtualCheckout;
+            let nomesItens = carrinho.map(i => i.nome).join(', ');
+
+            document.getElementById('resumo-carrinho-checkout').innerHTML = `
+                <p><strong>Itens:</strong> ${nomesItens}</p>
+                <p>Subtotal: R$ ${subtotalAtualCheckout.toFixed(2)} | Taxa: R$ ${taxaAtualCheckout.toFixed(2)}</p>
+                <p style="font-size:16px; color:#ff4757;"><strong>Total a Pagar: R$ ${totalAtualCheckout.toFixed(2)}</strong></p>
+            `;
+
+            let opcao = prompt("Escolha a forma de pagamento:\n1 - Pix\n2 - Dinheiro");
+            if(opcao === '1') {
+                document.getElementById('bloco-pix').style.display = 'block';
+                document.getElementById('bloco-dinheiro').style.display = 'none';
+                document.getElementById('texto-chave-pix').innerText = configLoja.chavePix;
+                mudarTela('tela-checkout');
+            } else if(opcao === '2') {
+                document.getElementById('bloco-pix').style.display = 'none';
+                document.getElementById('bloco-dinheiro').style.display = 'block';
+                mudarTela('tela-checkout');
+            }
+        }
+
+        function copiarChavePix() {
+            navigator.clipboard.writeText(configLoja.chavePix).then(() => {
+                mostrarAviso('Copiado!', 'Chave Pix copiada para a área de transferência.');
+            }).catch(() => {
+                mostrarAviso('Aviso', 'Chave: ' + configLoja.chavePix);
+            });
+        }
+
+        function concluirEnvioPix() {
+            finalizarPedidoNoServidor(`Pix Automático (R$ ${totalAtualCheckout.toFixed(2)})`);
+        }
+
+        function concluirEnvioDinheiro() {
+            let troco = document.getElementById('input-troco').value || 'Não informado';
+            finalizarPedidoNoServidor(`Dinheiro (Troco para: ${troco})`);
+        }
+
+        function finalizarPedidoNoServidor(formaPagamento) {
             socket.emit('novo_pedido', {
                 cliente: usuarioLogado.nome,
                 telefone: usuarioLogado.telefone,
@@ -341,18 +400,18 @@
                 bairro: usuarioLogado.bairro,
                 referencia: usuarioLogado.referencia,
                 itens: carrinho.map(i => i.nome),
-                subtotal: subtotal,
-                taxaEntrega: taxa,
-                total: total,
-                pagamento: pagamentoTexto
+                subtotal: subtotalAtualCheckout,
+                taxaEntrega: taxaAtualCheckout,
+                total: totalAtualCheckout,
+                pagamento: formaPagamento
             });
 
-            alert('Pedido enviado com sucesso!');
+            mostrarAviso('Sucesso', 'Pedido enviado com sucesso! Acompanhe o status na tela principal.');
             carrinho = [];
             document.getElementById('btn-carrinho').style.display = 'none';
+            mudarTela('tela-cardapio');
         }
 
-        // Renderizar pedidos com CRONÔMETRO REGRESSIVO EM TEMPO REAL
         function renderizarMeusPedidos() {
             if(!usuarioLogado) return;
             const container = document.getElementById('meus-pedidos');
@@ -381,61 +440,58 @@
 
                 const div = document.createElement('div');
                 div.className = 'pedido-box';
-                div.setAttribute('data-id', p.id);
                 div.innerHTML = `
                     <p><strong>Pedido #${p.id.toString().slice(-4)}</strong></p>
                     <p>Itens: ${p.itens.join(', ')}</p>
                     <p>Total: R$ ${p.total.toFixed(2)}</p>
                     <p>Status: <span class="status-badge ${classeStatus}">${p.status}</span></p>
-                    <div class="cronometro-regressivo" id="cronometro-${p.id}">Aguardando confirmação...</div>
+                    <div class="cronometro-regressivo" id="cronometro-${p.id}">Aguardando status...</div>
                     ${htmlAval}
                 `;
                 container.appendChild(div);
 
-                // Ativa o cronômetro regressivo se estiver em preparo
                 if(p.tempoFimTimestamp && p.status === 'Preparando') {
                     iniciarRelogioRegressivo(p.id, p.tempoFimTimestamp);
                 } else if(p.status === 'Saiu para Entrega') {
                     document.getElementById(`cronometro-${p.id}`).innerText = "🛵 Pedido a caminho do seu endereço!";
                 } else if(p.status === 'Concluído') {
                     document.getElementById(`cronometro-${p.id}`).innerText = "✅ Pedido entregue!";
+                } else if(p.status.includes('Aguardando Confirmação')) {
+                    document.getElementById(`cronometro-${p.id}`).innerText = "⏳ Aguardando confirmação do Pix pelo Admin...";
+                } else if(p.status.includes('Pagamento Não Identificado')) {
+                    document.getElementById(`cronometro-${p.id}`).innerText = "⚠️ Pagamento não localizado. Verifique o Pix!";
                 }
             });
         }
 
-        // Função do relógio regressivo segundo a segundo
         function iniciarRelogioRegressivo(idPedido, timestampFim) {
             const elemento = document.getElementById(`cronometro-${idPedido}`);
             if(!elemento) return;
-
             const intervalo = setInterval(() => {
-                const agora = Date.now();
-                const restante = timestampFim - agora;
-
+                const restante = timestampFim - Date.now();
                 if (restante <= 0) {
                     clearInterval(intervalo);
                     elemento.innerText = "⏳ Quase pronto para entrega!";
                 } else {
-                    const minutos = Math.floor((restante % (1000 * 60 * 60)) / (1000 * 60));
-                    const segundos = Math.floor((restante % (1000 * 60)) / 1000);
-                    elemento.innerText = `⏱️ Tempo restante: ${minutos}m ${segundos < 10 ? '0' : ''}${segundos}s`;
+                    const min = Math.floor((restante % (1000 * 60 * 60)) / (1000 * 60));
+                    const seg = Math.floor((restante % (1000 * 60)) / 1000);
+                    elemento.innerText = `⏱️ Tempo restante: ${min}m ${seg < 10 ? '0' : ''}${seg}s`;
                 }
             }, 1000);
         }
 
         function avaliar(idPedido, nota, comentario) {
             socket.emit('avaliar_pedido', { idPedido, nota, comentario });
-            alert('Obrigado pela sua avaliação!');
+            mostrarAviso('Obrigado', 'Avaliação enviada com sucesso!');
         }
 
-        // --- ADMIN: CÂMERA / GALERIA E CRONÔMETRO ---
         function salvarConfigLoja() {
             socket.emit('atualizar_config_loja', {
                 chavePix: document.getElementById('admin-chave-pix').value,
                 nomePix: document.getElementById('admin-nome-pix').value,
                 taxaEntrega: document.getElementById('admin-taxa').value
             });
-            alert('Configurações salvas com sucesso!');
+            mostrarAviso('Sucesso', 'Configurações salvas!');
         }
 
         function cadastrarNovoPratoComFoto() {
@@ -444,26 +500,22 @@
             const fileInput = document.getElementById('novo-foto-file');
 
             if(!nome || isNaN(preco)) {
-                alert('Preencha o nome e o preço do prato!');
+                mostrarAviso('Atenção', 'Preencha o nome e o preço do prato!');
                 return;
             }
 
             if(fileInput.files && fileInput.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    socket.emit('adicionar_prato', {
-                        nome: nome,
-                        preco: preco,
-                        imagem: e.target.result // Foto capturada da câmera ou galeria convertida em imagem
-                    });
+                    socket.emit('adicionar_prato', { nome, preco, imagem: e.target.result });
                     document.getElementById('novo-nome').value = '';
                     document.getElementById('novo-preco').value = '';
                     fileInput.value = '';
-                    alert('Prato cadastrado com sucesso!');
+                    mostrarAviso('Sucesso', 'Prato cadastrado!');
                 };
                 reader.readAsDataURL(fileInput.files[0]);
             } else {
-                alert('Por favor, escolha uma foto da galeria ou tire uma foto com a câmera.');
+                mostrarAviso('Atenção', 'Escolha uma foto da galeria ou tire com a câmera.');
             }
         }
 
@@ -510,7 +562,9 @@
                     <p><strong>Total:</strong> R$ ${p.total.toFixed(2)} | <strong>Pagamento:</strong> ${p.pagamento}</p>
                     <p><strong>Status:</strong> <span class="status-badge">${p.status}</span></p>
                     <div style="margin-top:10px; display: flex; gap: 5px; flex-wrap: wrap;">
-                        <button style="width: auto; padding: 6px 10px;" onclick="iniciarPreparoPedido(${p.id})">Preparando (Definir Minutos)</button>
+                        <button style="width: auto; padding: 6px 10px; background:#2ed573; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="atualizarStatus(${p.id}, 'Pagamento Confirmado', 0)">Confirmar Pix ✅</button>
+                        <button style="width: auto; padding: 6px 10px; background:#eb4d4b; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="atualizarStatus(${p.id}, 'Pagamento Não Identificado - Verifique o Pix', 0)">Pix Não Conectou ❌</button>
+                        <button style="width: auto; padding: 6px 10px;" onclick="iniciarPreparoPedido(${p.id})">Preparando (Minutos)</button>
                         <button style="width: auto; padding: 6px 10px; background:#1e90ff; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="atualizarStatus(${p.id}, 'Saiu para Entrega', 0)">Saiu 🛵</button>
                         <button style="width: auto; padding: 6px 10px; background:#2ed573; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="atualizarStatus(${p.id}, 'Concluído', 0)">Concluído ✅</button>
                     </div>
@@ -520,7 +574,7 @@
         }
 
         function iniciarPreparoPedido(idPedido) {
-            let minutos = prompt("Quantos minutos para o preparo? (Ex: 30)", "30");
+            let minutos = prompt("Quantos minutos para o preparo?", "30");
             if(minutos && !isNaN(minutos)) {
                 socket.emit('atualizar_status', { idPedido: idPedido, status: 'Preparando', minutosPreparo: minutos });
             }
