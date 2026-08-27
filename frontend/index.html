@@ -7,8 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <style>
         body { font-family: Arial, sans-serif; margin: 0; background: #f8f9fa; color: #333; padding-bottom: 70px; }
-        header { background: #ff4757; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        header button { background: none; border: none; color: white; font-size: 14px; cursor: pointer; }
+        header { background: #ff4757; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; }
         .container { padding: 15px; max-width: 600px; margin: auto; }
         .card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; }
         .card img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; margin-right: 12px; }
@@ -30,7 +29,7 @@
 </head>
 <body>
 
-    <!-- Aviso para instalar como PWA no celular -->
+    <!-- Banner para instalar o PWA na tela inicial -->
     <div id="banner-instalacao">
         📱 Instale nosso App na tela inicial! 
         <button id="btn-instalar">Instalar</button>
@@ -38,14 +37,14 @@
 
     <header>
         <span id="titulo-topo">🍔 Delícias da Casa</span>
-        <button onclick="irParaAdminLogin()">⚙️ Admin</button>
     </header>
 
-    <!-- TELA 1: LOGIN / CADASTRO DO CLIENTE -->
+    <!-- TELA 1: LOGIN / CADASTRO UNIFICADO -->
     <div id="tela-login" class="container tela ativa">
         <h2 style="text-align: center; color: #ff4757;">Bem-vindo ao Delivery!</h2>
         <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <h3>Entrar na sua conta</h3>
+            <p style="font-size: 12px; color: #666;">(Admin: digite seu e-mail como administrador@nomedoaplicativo)</p>
             <input type="email" id="login-email" placeholder="Seu e-mail">
             <input type="password" id="login-senha" placeholder="Sua senha">
             <button class="btn-acao" style="width: 100%; margin-top: 10px;" onclick="fazerLogin()">Entrar</button>
@@ -56,7 +55,7 @@
             <input type="text" id="cad-nome" placeholder="Seu Nome Completo">
             <input type="text" id="cad-tel" placeholder="Seu Telefone / WhatsApp">
             <input type="text" id="cad-end" placeholder="Seu Endereço de Entrega">
-            <input type="email" id="cad-email" placeholder="Seu e-mail">
+            <input type="email" id="cad-email" placeholder="Seu e-mail (Ex: cliente@email.com)">
             <input type="password" id="cad-senha" placeholder="Crie uma senha">
             <button class="btn-acao" style="width: 100%; background: #2ed573; margin-top: 10px;" onclick="fazerCadastro()">Criar Conta</button>
         </div>
@@ -65,19 +64,16 @@
     <!-- TELA 2: CARDÁPIO DO CLIENTE -->
     <div id="tela-cardapio" class="container tela">
         <h2>Cardápio Disponível</h2>
+        <button onclick="fazerLogout()" style="background:#666; color:white; border:none; padding:5px 10px; border-radius:4px; margin-bottom:10px; cursor:pointer;">Sair da Conta</button>
         <div id="lista-cardapio">Carregando cardápio...</div>
-    </div>
-
-    <!-- TELA 3: ACOMPANHAR PEDIDOS DO CLIENTE -->
-    <div id="tela-pedidos" class="container tela">
-        <h2>Meus Pedidos</h2>
+        <h2 style="margin-top: 30px;">Meus Pedidos</h2>
         <div id="meus-pedidos">Nenhum pedido recente.</div>
     </div>
 
-    <!-- TELA 4: PAINEL ADMINISTRADOR -->
+    <!-- TELA 3: PAINEL ADMINISTRADOR -->
     <div id="tela-admin" class="container tela">
         <h2>Painel do Administrador ⚙️</h2>
-        <button onclick="voltarCliente()" style="background:#666; color:white; border:none; padding:8px 12px; border-radius:5px; margin-bottom:15px; cursor:pointer;">← Sair do Admin</button>
+        <button onclick="fazerLogout()" style="background:#eb4d4b; color:white; border:none; padding:8px 12px; border-radius:5px; margin-bottom:15px; cursor:pointer;">Sair / Trocar Conta</button>
         
         <h3>Gerenciar Cardápio</h3>
         <div id="admin-cardapio"></div>
@@ -86,18 +82,7 @@
         <div id="admin-pedidos">Nenhum pedido no momento.</div>
     </div>
 
-    <!-- TELA 5: LOGIN DO ADMINISTRADOR -->
-    <div id="tela-admin-login" class="container tela">
-        <h2 style="text-align: center;">Área Restrita - Admin</h2>
-        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <input type="text" id="admin-user" placeholder="Usuário Admin">
-            <input type="password" id="admin-pass" placeholder="Senha Admin">
-            <button class="btn-acao" style="width: 100%; margin-top: 10px;" onclick="logarAdmin()">Acessar Painel</button>
-            <button onclick="voltarCliente()" style="background:none; border:none; color:#666; width:100%; margin-top:10px; cursor:pointer;">Voltar</button>
-        </div>
-    </div>
-
-    <!-- Botão Flutuante do Carrinho -->
+    <!-- Carrinho Flutuante -->
     <div id="btn-carrinho" class="carrinho-flutuante" onclick="abrirCheckout()">
         🛒 Ver Carrinho (<span id="contador-carrinho">0</span>)
     </div>
@@ -110,25 +95,28 @@
         const socket = io(SOCKET_URL);
 
         let usuarioLogado = JSON.parse(localStorage.getItem('usuario_delivery')) || null;
+        let tipoUsuario = localStorage.getItem('tipo_usuario') || null;
         let cardapioGlobal = [];
         let carrinho = [];
         let pedidosGlobal = [];
         let deferredPrompt;
 
-        // Gerenciamento de Telas
         function mudarTela(idTela) {
             document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
             document.getElementById(idTela).classList.add('ativa');
         }
 
-        // Verifica se já tem usuário logado no celular (para não perder dados)
+        // Verifica se já está logado ao abrir o app pelo ícone
         window.onload = () => {
             if (usuarioLogado) {
-                mudarTela('tela-cardapio');
+                if (tipoUsuario === 'admin') {
+                    mudarTela('tela-admin');
+                } else {
+                    mudarTela('tela-cardapio');
+                }
             }
         };
 
-        // --- SISTEMA DE CADASTRO E LOGIN ---
         function fazerCadastro() {
             const dados = {
                 nome: document.getElementById('cad-nome').value,
@@ -145,8 +133,10 @@
                 alert(res.mensagem);
                 if(res.sucesso) {
                     usuarioLogado = dados;
+                    tipoUsuario = dados.email.startsWith('administrador@') ? 'admin' : 'cliente';
                     localStorage.setItem('usuario_delivery', JSON.stringify(usuarioLogado));
-                    mudarTela('tela-cardapio');
+                    localStorage.setItem('tipo_usuario', tipoUsuario);
+                    mudarTela(tipoUsuario === 'admin' ? 'tela-admin' : 'tela-cardapio');
                 }
             });
         }
@@ -159,16 +149,24 @@
             socket.emit('login_usuario', dados, (res) => {
                 if(res.sucesso) {
                     usuarioLogado = res.usuario;
+                    tipoUsuario = res.tipo;
                     localStorage.setItem('usuario_delivery', JSON.stringify(usuarioLogado));
-                    alert('Login realizado com sucesso!');
-                    mudarTela('tela-cardapio');
+                    localStorage.setItem('tipo_usuario', tipoUsuario);
+                    mudarTela(tipoUsuario === 'admin' ? 'tela-admin' : 'tela-cardapio');
                 } else {
                     alert(res.mensagem);
                 }
             });
         }
 
-        // --- SOCKETS E DADOS EM TEMPO REAL ---
+        function fazerLogout() {
+            localStorage.removeItem('usuario_delivery');
+            localStorage.removeItem('tipo_usuario');
+            usuarioLogado = null;
+            tipoUsuario = null;
+            mudarTela('tela-login');
+        }
+
         socket.on('atualizar_cardapio', (cardapio) => {
             cardapioGlobal = cardapio;
             renderizarCardapio();
@@ -235,10 +233,9 @@
                 pagamento: formaPagamento
             });
 
-            alert('Pedido enviado com sucesso! Acompanhe o status.');
+            alert('Pedido enviado com sucesso!');
             carrinho = [];
             document.getElementById('btn-carrinho').style.display = 'none';
-            mudarTela('tela-pedidos');
         }
 
         function renderizarMeusPedidos() {
@@ -246,7 +243,7 @@
             const container = document.getElementById('meus-pedidos');
             const meus = pedidosGlobal.filter(p => p.cliente === usuarioLogado.nome);
             if(meus.length === 0) {
-                container.innerHTML = '<p>Nenhum pedido feito ainda.</p>';
+                container.innerHTML = '<p>Nenhum pedido recente.</p>';
                 return;
             }
             container.innerHTML = '';
@@ -283,24 +280,6 @@
         function avaliar(idPedido, nota, comentario) {
             socket.emit('avaliar_pedido', { idPedido, nota, comentario });
             alert('Obrigado pela avaliação!');
-        }
-
-        // --- PAINEL ADMINISTRADOR ---
-        function irParaAdminLogin() { mudarTela('tela-admin-login'); }
-        function voltarCliente() { mudarTela(usuarioLogado ? 'tela-cardapio' : 'tela-login'); }
-
-        function logarAdmin() {
-            const dados = {
-                usuario: document.getElementById('admin-user').value,
-                senha: document.getElementById('admin-pass').value
-            };
-            socket.emit('login_admin', dados, (res) => {
-                if(res.sucesso) {
-                    mudarTela('tela-admin');
-                } else {
-                    alert(res.mensagem);
-                }
-            });
         }
 
         function renderizarAdminCardapio() {
@@ -353,7 +332,7 @@
             socket.emit('atualizar_status', { idPedido, status, tempoPreparo });
         }
 
-        // --- INSTALAÇÃO PWA (Instalar como App) ---
+        // Instalação PWA
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -364,13 +343,10 @@
             document.getElementById('banner-instalacao').style.display = 'none';
             if(deferredPrompt) {
                 deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    deferredPrompt = null;
-                });
+                deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
             }
         });
 
-        // Registro do Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {});
         }
