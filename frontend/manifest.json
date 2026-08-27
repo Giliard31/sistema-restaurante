@@ -1,7 +1,7 @@
 {
-  "name": "Meu Delivery",
+  "name": "Delícias da Casa",
   "short_name": "Delivery",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ff4757",
