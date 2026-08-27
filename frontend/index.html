@@ -7,86 +7,183 @@
     <link rel="manifest" href="manifest.json">
     <style>
         body { font-family: Arial, sans-serif; margin: 0; background: #f8f9fa; color: #333; padding-bottom: 70px; }
-        header { background: #ff4757; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        header button { background: white; color: #ff4757; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .container { padding: 15px; }
-        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; }
-        .card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; margin-right: 15px; }
+        header { background: #ff4757; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        header button { background: none; border: none; color: white; font-size: 14px; cursor: pointer; }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; }
+        .card img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; margin-right: 12px; }
         .info { flex-grow: 1; }
         .indisponivel { opacity: 0.5; filter: grayscale(100%); }
-        button.btn-acao { background: #ff4757; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        button.btn-acao { background: #ff4757; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         button:disabled { background: #ccc; cursor: not-allowed; }
-        .painel { display: none; }
-        .pedido-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #ff4757; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .tela { display: none; }
+        .ativa { display: block; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .carrinho-flutuante { position: fixed; bottom: 15px; right: 15px; background: #2ed573; color: white; padding: 12px 20px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; display: none; z-index: 100; }
+        .pedido-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 5px solid #ff4757; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: white; background: #ffa502; }
         .status-concluido { background: #2ed573; }
         .status-saiu { background: #1e90ff; }
-        .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; }
-        .footer-nav button { flex: 1; padding: 15px; background: none; border: none; font-weight: bold; color: #666; cursor: pointer; }
-        .footer-nav button.ativo { color: #ff4757; border-top: 3px solid #ff4757; }
+        #banner-instalacao { background: #2f3542; color: white; padding: 10px 15px; text-align: center; font-size: 14px; display: none; }
+        #banner-instalacao button { background: #ff4757; border: none; color: white; padding: 5px 10px; margin-left: 10px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
 
+    <!-- Aviso para instalar como PWA no celular -->
+    <div id="banner-instalacao">
+        📱 Instale nosso App na tela inicial! 
+        <button id="btn-instalar">Instalar</button>
+    </div>
+
     <header>
-        <span>🍔 Delícias da Casa</span>
-        <button onclick="alternarModoAdmin()">Admin</button>
+        <span id="titulo-topo">🍔 Delícias da Casa</span>
+        <button onclick="irParaAdminLogin()">⚙️ Admin</button>
     </header>
 
-    <!-- TELA DO CLIENTE: CARDÁPIO -->
-    <div id="tela-cliente" class="container">
+    <!-- TELA 1: LOGIN / CADASTRO DO CLIENTE -->
+    <div id="tela-login" class="container tela ativa">
+        <h2 style="text-align: center; color: #ff4757;">Bem-vindo ao Delivery!</h2>
+        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h3>Entrar na sua conta</h3>
+            <input type="email" id="login-email" placeholder="Seu e-mail">
+            <input type="password" id="login-senha" placeholder="Sua senha">
+            <button class="btn-acao" style="width: 100%; margin-top: 10px;" onclick="fazerLogin()">Entrar</button>
+            
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+            
+            <h3>Ainda não tem conta? Cadastre-se</h3>
+            <input type="text" id="cad-nome" placeholder="Seu Nome Completo">
+            <input type="text" id="cad-tel" placeholder="Seu Telefone / WhatsApp">
+            <input type="text" id="cad-end" placeholder="Seu Endereço de Entrega">
+            <input type="email" id="cad-email" placeholder="Seu e-mail">
+            <input type="password" id="cad-senha" placeholder="Crie uma senha">
+            <button class="btn-acao" style="width: 100%; background: #2ed573; margin-top: 10px;" onclick="fazerCadastro()">Criar Conta</button>
+        </div>
+    </div>
+
+    <!-- TELA 2: CARDÁPIO DO CLIENTE -->
+    <div id="tela-cardapio" class="container tela">
         <h2>Cardápio Disponível</h2>
         <div id="lista-cardapio">Carregando cardápio...</div>
-        
-        <h2>Meus Pedidos & Status</h2>
-        <div id="meus-pedidos">Nenhum pedido feito ainda.</div>
     </div>
 
-    <!-- TELA DO ADMINISTRADOR -->
-    <div id="tela-admin" class="container painel">
+    <!-- TELA 3: ACOMPANHAR PEDIDOS DO CLIENTE -->
+    <div id="tela-pedidos" class="container tela">
+        <h2>Meus Pedidos</h2>
+        <div id="meus-pedidos">Nenhum pedido recente.</div>
+    </div>
+
+    <!-- TELA 4: PAINEL ADMINISTRADOR -->
+    <div id="tela-admin" class="container tela">
         <h2>Painel do Administrador ⚙️</h2>
-        <h3>Gerenciar Cardápio (Ligar/Desligar Pratos)</h3>
+        <button onclick="voltarCliente()" style="background:#666; color:white; border:none; padding:8px 12px; border-radius:5px; margin-bottom:15px; cursor:pointer;">← Sair do Admin</button>
+        
+        <h3>Gerenciar Cardápio</h3>
         <div id="admin-cardapio"></div>
 
-        <h3 style="margin-top: 30px;">Gerenciamento de Pedidos Chegando</h3>
-        <div id="admin-pedidos">Nenhum pedido recebido.</div>
+        <h3 style="margin-top: 30px;">Pedidos Recebidos em Tempo Real</h3>
+        <div id="admin-pedidos">Nenhum pedido no momento.</div>
     </div>
 
-    <!-- Barra Inferior de Navegação -->
-    <div class="footer-nav">
-        <button id="nav-cliente" class="ativo" onclick="mudarAba('cliente')">Cardápio / Pedidos</button>
-        <button id="nav-status" onclick="mudarAba('status')">Acompanhar Status</button>
+    <!-- TELA 5: LOGIN DO ADMINISTRADOR -->
+    <div id="tela-admin-login" class="container tela">
+        <h2 style="text-align: center;">Área Restrita - Admin</h2>
+        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <input type="text" id="admin-user" placeholder="Usuário Admin">
+            <input type="password" id="admin-pass" placeholder="Senha Admin">
+            <button class="btn-acao" style="width: 100%; margin-top: 10px;" onclick="logarAdmin()">Acessar Painel</button>
+            <button onclick="voltarCliente()" style="background:none; border:none; color:#666; width:100%; margin-top:10px; cursor:pointer;">Voltar</button>
+        </div>
+    </div>
+
+    <!-- Botão Flutuante do Carrinho -->
+    <div id="btn-carrinho" class="carrinho-flutuante" onclick="abrirCheckout()">
+        🛒 Ver Carrinho (<span id="contador-carrinho">0</span>)
     </div>
 
     <!-- Socket.io -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
-        // ATENÇÃO: Substitua abaixo pelo link oficial que o Render te deu (ex: https://seu-app.onrender.com)
-        const SOCKET_URL = 'https://sistema-restaurante-rn2m.onrender.com/'; 
+        // ATENÇÃO: Substitua pelo link oficial do seu backend no Render
+        const SOCKET_URL = 'https://sistema-restaurante-rn2m.onrender.com/';
         const socket = io(SOCKET_URL);
 
+        let usuarioLogado = JSON.parse(localStorage.getItem('usuario_delivery')) || null;
         let cardapioGlobal = [];
+        let carrinho = [];
         let pedidosGlobal = [];
-        let meuUltimoPedidoId = null;
+        let deferredPrompt;
 
-        // Recebe atualizações do cardápio em tempo real
+        // Gerenciamento de Telas
+        function mudarTela(idTela) {
+            document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+            document.getElementById(idTela).classList.add('ativa');
+        }
+
+        // Verifica se já tem usuário logado no celular (para não perder dados)
+        window.onload = () => {
+            if (usuarioLogado) {
+                mudarTela('tela-cardapio');
+            }
+        };
+
+        // --- SISTEMA DE CADASTRO E LOGIN ---
+        function fazerCadastro() {
+            const dados = {
+                nome: document.getElementById('cad-nome').value,
+                telefone: document.getElementById('cad-tel').value,
+                endereco: document.getElementById('cad-end').value,
+                email: document.getElementById('cad-email').value,
+                senha: document.getElementById('cad-senha').value
+            };
+            if(!dados.nome || !dados.email || !dados.senha) {
+                alert('Preencha todos os campos obrigatórios!');
+                return;
+            }
+            socket.emit('cadastrar_usuario', dados, (res) => {
+                alert(res.mensagem);
+                if(res.sucesso) {
+                    usuarioLogado = dados;
+                    localStorage.setItem('usuario_delivery', JSON.stringify(usuarioLogado));
+                    mudarTela('tela-cardapio');
+                }
+            });
+        }
+
+        function fazerLogin() {
+            const dados = {
+                email: document.getElementById('login-email').value,
+                senha: document.getElementById('login-senha').value
+            };
+            socket.emit('login_usuario', dados, (res) => {
+                if(res.sucesso) {
+                    usuarioLogado = res.usuario;
+                    localStorage.setItem('usuario_delivery', JSON.stringify(usuarioLogado));
+                    alert('Login realizado com sucesso!');
+                    mudarTela('tela-cardapio');
+                } else {
+                    alert(res.mensagem);
+                }
+            });
+        }
+
+        // --- SOCKETS E DADOS EM TEMPO REAL ---
         socket.on('atualizar_cardapio', (cardapio) => {
             cardapioGlobal = cardapio;
-            renderizarCardapioCliente();
-            renderizarCardapioAdmin();
+            renderizarCardapio();
+            renderizarAdminCardapio();
         });
 
-        // Recebe atualizações de pedidos em tempo real
         socket.on('atualizar_pedidos', (pedidos) => {
             pedidosGlobal = pedidos;
-            renderizarPedidosCliente();
-            renderizarPedidosAdmin();
+            renderizarMeusPedidos();
+            renderizarAdminPedidos();
         });
 
-        function renderizarCardapioCliente() {
+        function renderizarCardapio() {
             const container = document.getElementById('lista-cardapio');
             container.innerHTML = '';
-
             cardapioGlobal.forEach(item => {
                 const div = document.createElement('div');
                 div.className = `card ${item.disponivel ? '' : 'indisponivel'}`;
@@ -95,18 +192,120 @@
                     <div class="info">
                         <h3>${item.nome}</h3>
                         <p>R$ ${item.preco.toFixed(2)}</p>
-                        <p><strong>${item.disponivel ? 'Disponível ✅' : 'Esgotado no Momento ❌'}</strong></p>
+                        <p><strong>${item.disponivel ? 'Disponível ✅' : 'Esgotado ❌'}</strong></p>
                     </div>
-                    <button class="btn-acao" ${!item.disponivel ? 'disabled' : ''} onclick="fazerPedido(${item.id})">Pedir</button>
+                    <button class="btn-acao" ${!item.disponivel ? 'disabled' : ''} onclick="adicionarCarrinho(${item.id})">+ Adicionar</button>
                 `;
                 container.appendChild(div);
             });
         }
 
-        function renderizarCardapioAdmin() {
+        function adicionarCarrinho(id) {
+            const item = cardapioGlobal.find(p => p.id === id);
+            if(item) {
+                carrinho.push(item);
+                document.getElementById('contador-carrinho').innerText = carrinho.length;
+                document.getElementById('btn-carrinho').style.display = 'block';
+                alert(`${item.nome} adicionado ao carrinho!`);
+            }
+        }
+
+        function abrirCheckout() {
+            if(carrinho.length === 0) return;
+            let total = carrinho.reduce((soma, i) => soma + i.preco, 0);
+            let nomesItens = carrinho.map(i => i.nome).join(', ');
+            
+            let formaPagamento = prompt(`Seu pedido: ${nomesItens}\nTotal: R$ ${total.toFixed(2)}\n\nComo deseja pagar?\nDigite: 1 para Pix ou 2 para Dinheiro`);
+            
+            if(formaPagamento === '1') {
+                formaPagamento = 'Pix Manual';
+            } else if(formaPagamento === '2') {
+                let troco = prompt('Vai precisar de troco para quanto? (Ex: R$ 50,00 ou Não)');
+                formaPagamento = `Dinheiro (Troco para: ${troco})`;
+            } else {
+                return;
+            }
+
+            socket.emit('novo_pedido', {
+                cliente: usuarioLogado.nome,
+                telefone: usuarioLogado.telefone,
+                endereco: usuarioLogado.endereco,
+                itens: carrinho.map(i => i.nome),
+                total: total,
+                pagamento: formaPagamento
+            });
+
+            alert('Pedido enviado com sucesso! Acompanhe o status.');
+            carrinho = [];
+            document.getElementById('btn-carrinho').style.display = 'none';
+            mudarTela('tela-pedidos');
+        }
+
+        function renderizarMeusPedidos() {
+            if(!usuarioLogado) return;
+            const container = document.getElementById('meus-pedidos');
+            const meus = pedidosGlobal.filter(p => p.cliente === usuarioLogado.nome);
+            if(meus.length === 0) {
+                container.innerHTML = '<p>Nenhum pedido feito ainda.</p>';
+                return;
+            }
+            container.innerHTML = '';
+            meus.forEach(p => {
+                let classeStatus = p.status === 'Saiu para Entrega' ? 'status-saiu' : (p.status === 'Concluído' ? 'status-concluido' : '');
+                let htmlAval = '';
+                if(p.status === 'Concluído' && !p.avaliacao) {
+                    htmlAval = `
+                        <div style="margin-top:10px; background:#f1f2f6; padding:10px; border-radius:5px;">
+                            <p><strong>Avalie nosso atendimento:</strong></p>
+                            <button onclick="avaliar(${p.id}, 5, 'Excelente')">⭐⭐⭐⭐⭐</button>
+                            <button onclick="avaliar(${p.id}, 3, 'Bom')">⭐⭐⭐</button>
+                            <button onclick="avaliar(${p.id}, 1, 'Ruim')">⭐</button>
+                        </div>
+                    `;
+                } else if(p.avaliacao) {
+                    htmlAval = `<p>⭐ Sua Avaliação: ${p.avaliacao} estrelas</p>`;
+                }
+
+                const div = document.createElement('div');
+                div.className = 'pedido-box';
+                div.innerHTML = `
+                    <p><strong>Pedido #${p.id.toString().slice(-4)}</strong></p>
+                    <p>Itens: ${p.itens.join(', ')}</p>
+                    <p>Pagamento: ${p.pagamento}</p>
+                    <p>Status: <span class="status-badge ${classeStatus}">${p.status}</span></p>
+                    <p>Tempo de Preparo: <strong>${p.tempoPreparo}</strong></p>
+                    ${htmlAval}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function avaliar(idPedido, nota, comentario) {
+            socket.emit('avaliar_pedido', { idPedido, nota, comentario });
+            alert('Obrigado pela avaliação!');
+        }
+
+        // --- PAINEL ADMINISTRADOR ---
+        function irParaAdminLogin() { mudarTela('tela-admin-login'); }
+        function voltarCliente() { mudarTela(usuarioLogado ? 'tela-cardapio' : 'tela-login'); }
+
+        function logarAdmin() {
+            const dados = {
+                usuario: document.getElementById('admin-user').value,
+                senha: document.getElementById('admin-pass').value
+            };
+            socket.emit('login_admin', dados, (res) => {
+                if(res.sucesso) {
+                    mudarTela('tela-admin');
+                } else {
+                    alert(res.mensagem);
+                }
+            });
+        }
+
+        function renderizarAdminCardapio() {
             const container = document.getElementById('admin-cardapio');
             container.innerHTML = '';
-
             cardapioGlobal.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'card';
@@ -114,54 +313,35 @@
                     <img src="${item.imagem}" alt="${item.nome}">
                     <div class="info">
                         <h3>${item.nome}</h3>
-                        <p>Status: <strong>${item.disponivel ? 'Ligado (Disponível)' : 'Desligado (Indisponível)'}</strong></p>
+                        <p>Status: <strong>${item.disponivel ? 'Ligado ✅' : 'Desligado ❌'}</strong></p>
                     </div>
-                    <button class="btn-acao" style="background: ${item.disponivel ? '#eb4d4b' : '#2ed573'};" onclick="mudarDisponibilidade(${item.id})">
-                        ${item.disponivel ? 'Desligar Prato' : 'Ligar Prato'}
+                    <button class="btn-acao" style="background:${item.disponivel?'#eb4d4b':'#2ed573'};" onclick="socket.emit('mudar_disponibilidade', ${item.id})">
+                        ${item.disponivel ? 'Desligar' : 'Ligar'}
                     </button>
                 `;
                 container.appendChild(div);
             });
         }
 
-        function fazerPedido(id) {
-            const item = cardapioGlobal.find(p => p.id === id);
-            if (!item) return;
-
-            const nomeCliente = prompt("Digite seu nome para o pedido:", "Cliente");
-            if (!nomeCliente) return;
-
-            socket.emit('novo_pedido', {
-                cliente: nomeCliente,
-                itens: [item.nome],
-                total: item.preco
-            });
-            alert('Pedido enviado com sucesso! Acompanhe o status na aba inferior.');
-        }
-
-        function mudarDisponibilidade(id) {
-            socket.emit('mudar_disponibilidade', id);
-        }
-
-        function renderizarPedidosAdmin() {
+        function renderizarAdminPedidos() {
             const container = document.getElementById('admin-pedidos');
-            if (pedidosGlobal.length === 0) {
-                container.innerHTML = '<p>Nenhum pedido no momento.</p>';
+            if(pedidosGlobal.length === 0) {
+                container.innerHTML = '<p>Nenhum pedido recebido.</p>';
                 return;
             }
-
             container.innerHTML = '';
             pedidosGlobal.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'pedido-box';
                 div.innerHTML = `
-                    <p><strong>Cliente:</strong> ${p.cliente} | <strong>Item:</strong> ${p.itens.join(', ')}</p>
-                    <p><strong>Total:</strong> R$ ${p.total.toFixed(2)}</p>
-                    <p><strong>Status Atual:</strong> <span class="status-badge">${p.status}</span></p>
-                    <p><strong>Tempo de Preparo Estimado:</strong> ${p.tempoPreparo}</p>
-                    <div style="margin-top: 10px;">
-                        <button onclick="atualizarStatus(${p.id}, 'Preparando', prompt('Informe o tempo estimado (ex: 30 min):', '30 min'))">Definir como Preparando</button>
-                        <button onclick="atualizarStatus(${p.id}, 'Saiu para Entrega', '')" style="background:#1e90ff; color:white;">Saiu para Entrega 🛵</button>
+                    <p><strong>Cliente:</strong> ${p.cliente} | <strong>Tel:</strong> ${p.telefone}</p>
+                    <p><strong>Endereço:</strong> ${p.endereco}</p>
+                    <p><strong>Itens:</strong> ${p.itens.join(', ')} | <strong>Total:</strong> R$ ${p.total.toFixed(2)}</p>
+                    <p><strong>Pagamento:</strong> ${p.pagamento}</p>
+                    <p><strong>Status:</strong> <span class="status-badge">${p.status}</span></p>
+                    <div style="margin-top:10px;">
+                        <button onclick="atualizarStatus(${p.id}, 'Preparando', prompt('Tempo estimado (ex: 30 min):','30 min'))">Preparando</button>
+                        <button onclick="atualizarStatus(${p.id}, 'Saiu para Entrega', '')" style="background:#1e90ff; color:white;">Saiu 🛵</button>
                         <button onclick="atualizarStatus(${p.id}, 'Concluído', '')" style="background:#2ed573; color:white;">Concluído ✅</button>
                     </div>
                 `;
@@ -169,81 +349,28 @@
             });
         }
 
-        function renderizarPedidosCliente() {
-            const container = document.getElementById('meus-pedidos');
-            if (pedidosGlobal.length === 0) {
-                container.innerHTML = '<p>Nenhum pedido recente.</p>';
-                return;
+        function atualizarStatus(idPedido, status, tempoPreparo) {
+            socket.emit('atualizar_status', { idPedido, status, tempoPreparo });
+        }
+
+        // --- INSTALAÇÃO PWA (Instalar como App) ---
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('banner-instalacao').style.display = 'block';
+        });
+
+        document.getElementById('btn-instalar').addEventListener('click', () => {
+            document.getElementById('banner-instalacao').style.display = 'none';
+            if(deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    deferredPrompt = null;
+                });
             }
+        });
 
-            container.innerHTML = '';
-            pedidosGlobal.slice(-2).forEach(p => { // Mostra os últimos pedidos
-                let classeStatus = '';
-                if (p.status === 'Saiu para Entrega') classeStatus = 'status-saiu';
-                if (p.status === 'Concluído') classeStatus = 'status-concluido';
-
-                let htmlAvaliacao = '';
-                if (p.status === 'Concluído') {
-                    if (p.avaliacao) {
-                        htmlAvaliacao = `<p>⭐ Sua Avaliação: ${p.avaliacao} estrelas - "${p.comentarioAvaliacao}"</p>`;
-                    } else {
-                        htmlAvaliacao = `
-                            <div style="margin-top:10px; background:#f1f2f6; padding:10px; border-radius:5px;">
-                                <p><strong>O pedido foi entregue! O que achou do atendimento?</strong></p>
-                                <button onclick="avaliar(${p.id}, 5, 'Excelente!')">⭐⭐⭐⭐⭐</button>
-                                <button onclick="avaliar(${p.id}, 3, 'Bom')">⭐⭐⭐</button>
-                                <button onclick="avaliar(${p.id}, 1, 'Ruim')">⭐</button>
-                            </div>
-                        `;
-                    }
-                }
-
-                const div = document.createElement('div');
-                div.className = 'pedido-box';
-                div.innerHTML = `
-                    <p><strong>Pedido #${p.id.toString().slice(-4)}</strong> - ${p.itens.join(', ')}</p>
-                    <p>Status: <span class="status-badge ${classeStatus}">${p.status}</span></p>
-                    <p>Tempo de Preparo: <strong>${p.tempoPreparo}</strong></p>
-                    ${htmlAvaliacao}
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function atualizarStatus(idPedido, status, tempo) {
-            socket.emit('atualizar_status', { idPedido, status, tempoPreparo: tempo });
-        }
-
-        function avaliar(idPedido, nota, comentario) {
-            socket.emit('avaliar_pedido', { idPedido, nota, comentario });
-            alert('Obrigado pela sua avaliação!');
-        }
-
-        function alternarModoAdmin() {
-            const senha = prompt("Digite a senha de Administrador:");
-            if (senha === "1234") { // Senha simples para o teste gratuito
-                const telaCliente = document.getElementById('tela-cliente');
-                const telaAdmin = document.getElementById('tela-admin');
-                if (telaAdmin.style.display === 'block') {
-                    telaAdmin.style.display = 'none';
-                    telaCliente.style.display = 'block';
-                } else {
-                    telaAdmin.style.display = 'block';
-                    telaCliente.style.display = 'none';
-                }
-            } else if (senha !== null) {
-                alert("Senha incorreta!");
-            }
-        }
-
-        function mudarAba(aba) {
-            document.getElementById('nav-cliente').classList.remove('ativo');
-            document.getElementById('nav-status').classList.remove('ativo');
-            if (aba === 'cliente') document.getElementById('nav-cliente').classList.add('ativo');
-            if (aba === 'status') document.getElementById('nav-status').classList.add('ativo');
-        }
-
-        // PWA Service Worker
+        // Registro do Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {});
         }
