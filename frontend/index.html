@@ -30,6 +30,7 @@
         .secao-cadastro { display: none; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
         .cronometro-regressivo { font-size: 15px; font-weight: bold; color: #ff4757; margin-top: 5px; }
         
+        /* Modal customizado elegante (Sem "A página diz") */
         #modal-aviso { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-conteudo { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
     </style>
@@ -112,10 +113,10 @@
             <div id="resumo-carrinho-checkout" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 14px;"></div>
 
             <div id="bloco-pix" style="display:none;">
-                <p style="font-size: 14px; font-weight: bold; color: #333;">Pagamento via Pix:</p>
+                <p style="font-size: 14px; font-weight: bold; color: #333;">Pagamento via Pix (Chave do Estabelecimento):</p>
                 <div style="background: #e1b12c33; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 12px; word-break: break-all; margin-bottom: 10px;" id="texto-chave-pix"></div>
                 <button class="btn-acao" style="background: #ffa502; margin-bottom: 10px;" onclick="copiarChavePix()">📋 Copiar Chave Pix</button>
-                <p style="font-size: 12px; color: #666; text-align: center;">Faça o Pix no seu banco com o valor total e depois clique no botão abaixo para enviar o pedido.</p>
+                <p style="font-size: 12px; color: #666; text-align: center;">Abra o aplicativo do seu banco, faça o Pix com o valor total e depois clique no botão abaixo.</p>
                 <button class="btn-acao" style="background: #2ed573;" onclick="concluirEnvioPix()">Já fiz o pagamento (Enviar Pedido)</button>
             </div>
 
@@ -145,11 +146,11 @@
         </div>
 
         <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <h3>Adicionar Prato (Galeria ou Câmera)</h3>
+            <h3>Adicionar Prato (Câmera / Galeria)</h3>
             <input type="text" id="novo-nome" placeholder="Nome do Prato">
             <input type="number" step="0.10" id="novo-preco" placeholder="Preço (Ex: 45.00)">
-            <label style="font-size: 13px; color: #666; display: block; margin-top: 5px;">Selecione a imagem (abre galeria ou câmera):</label>
-            <input type="file" id="novo-foto-file" accept="image/*" style="margin: 5px 0 10px 0;">
+            <label style="font-size: 13px; color: #666; display: block; margin-top: 5px;">Foto do prato:</label>
+            <input type="file" id="novo-foto-file" accept="image/*" capture="environment" style="margin: 5px 0 10px 0;">
             <button class="btn-acao" style="background: #2ed573;" onclick="cadastrarNovoPratoComFoto()">Adicionar Prato</button>
         </div>
 
@@ -166,7 +167,7 @@
 
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
-        const SOCKET_URL = 'https://sistema-restaurante-rn2m.onrender.com/';
+        const SOCKET_URL = 'http://localhost:3000';
         const socket = io(SOCKET_URL);
 
         let usuarioLogado = JSON.parse(localStorage.getItem('usuario_delivery')) || null;
@@ -177,6 +178,7 @@
         let configLoja = { taxaEntrega: 0, chavePix: "", nomePix: "" };
         let deferredPrompt;
 
+        // Substituição limpa de alert
         function mostrarAviso(titulo, texto) {
             document.getElementById('modal-titulo').innerText = titulo;
             document.getElementById('modal-texto').innerText = texto;
@@ -295,7 +297,6 @@
             mudarTela('tela-login');
         }
 
-        // Ouvintes de tempo real conectados perfeitamente
         socket.on('atualizar_cardapio', (cardapio) => {
             cardapioGlobal = cardapio;
             renderizarCardapio();
@@ -510,11 +511,11 @@
                     document.getElementById('novo-nome').value = '';
                     document.getElementById('novo-preco').value = '';
                     fileInput.value = '';
-                    mostrarAviso('Sucesso', 'Prato cadastrado e enviado ao cardápio!');
+                    mostrarAviso('Sucesso', 'Prato cadastrado!');
                 };
                 reader.readAsDataURL(fileInput.files[0]);
             } else {
-                mostrarAviso('Atenção', 'Selecione uma imagem da galeria ou arquivo.');
+                mostrarAviso('Atenção', 'Escolha uma foto da galeria ou tire com a câmera.');
             }
         }
 
