@@ -3,40 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Restaurante - Delivery</title>
+    <title>Delícias da Casa - Delivery</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; background: #f8f9fa; color: #333; }
-        header { background: #ff4757; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
+        body { font-family: Arial, sans-serif; margin: 0; background: #f8f9fa; color: #333; padding-bottom: 70px; }
+        header { background: #ff4757; color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        header button { background: white; color: #ff4757; border: none; padding: 5px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .container { padding: 15px; }
         .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; align-items: center; }
         .card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; margin-right: 15px; }
         .info { flex-grow: 1; }
         .indisponivel { opacity: 0.5; filter: grayscale(100%); }
-        button { background: #ff4757; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
-        button:disabled { background: #ccc; }
+        button.btn-acao { background: #ff4757; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .painel { display: none; }
+        .pedido-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #ff4757; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: white; background: #ffa502; }
+        .status-concluido { background: #2ed573; }
+        .status-saiu { background: #1e90ff; }
+        .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; }
+        .footer-nav button { flex: 1; padding: 15px; background: none; border: none; font-weight: bold; color: #666; cursor: pointer; }
+        .footer-nav button.ativo { color: #ff4757; border-top: 3px solid #ff4757; }
     </style>
 </head>
 <body>
 
-    <header>🍔 Delícias da Casa</header>
+    <header>
+        <span>🍔 Delícias da Casa</span>
+        <button onclick="alternarModoAdmin()">Admin</button>
+    </header>
 
-    <div class="container">
-        <h2>Cardápio</h2>
+    <!-- TELA DO CLIENTE: CARDÁPIO -->
+    <div id="tela-cliente" class="container">
+        <h2>Cardápio Disponível</h2>
         <div id="lista-cardapio">Carregando cardápio...</div>
+        
+        <h2>Meus Pedidos & Status</h2>
+        <div id="meus-pedidos">Nenhum pedido feito ainda.</div>
     </div>
 
-    <!-- Biblioteca do Socket.io para comunicação em tempo real -->
+    <!-- TELA DO ADMINISTRADOR -->
+    <div id="tela-admin" class="container painel">
+        <h2>Painel do Administrador ⚙️</h2>
+        <h3>Gerenciar Cardápio (Ligar/Desligar Pratos)</h3>
+        <div id="admin-cardapio"></div>
+
+        <h3 style="margin-top: 30px;">Gerenciamento de Pedidos Chegando</h3>
+        <div id="admin-pedidos">Nenhum pedido recebido.</div>
+    </div>
+
+    <!-- Barra Inferior de Navegação -->
+    <div class="footer-nav">
+        <button id="nav-cliente" class="ativo" onclick="mudarAba('cliente')">Cardápio / Pedidos</button>
+        <button id="nav-status" onclick="mudarAba('status')">Acompanhar Status</button>
+    </div>
+
+    <!-- Socket.io -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
-        // ATENCAO: Quando subir o backend no Render, troque o link abaixo pelo link do seu servidor do Render
-        const socket = io('https://sistema-restaurante-rn2m.onrender.com/');
+        // ATENÇÃO: Substitua abaixo pelo link oficial que o Render te deu (ex: https://seu-app.onrender.com)
+        const SOCKET_URL = 'https://sistema-restaurante-rn2m.onrender.com/'; 
+        const socket = io(SOCKET_URL);
 
+        let cardapioGlobal = [];
+        let pedidosGlobal = [];
+        let meuUltimoPedidoId = null;
+
+        // Recebe atualizações do cardápio em tempo real
         socket.on('atualizar_cardapio', (cardapio) => {
+            cardapioGlobal = cardapio;
+            renderizarCardapioCliente();
+            renderizarCardapioAdmin();
+        });
+
+        // Recebe atualizações de pedidos em tempo real
+        socket.on('atualizar_pedidos', (pedidos) => {
+            pedidosGlobal = pedidos;
+            renderizarPedidosCliente();
+            renderizarPedidosAdmin();
+        });
+
+        function renderizarCardapioCliente() {
             const container = document.getElementById('lista-cardapio');
             container.innerHTML = '';
 
-            cardapio.forEach(item => {
+            cardapioGlobal.forEach(item => {
                 const div = document.createElement('div');
                 div.className = `card ${item.disponivel ? '' : 'indisponivel'}`;
                 div.innerHTML = `
@@ -44,23 +95,157 @@
                     <div class="info">
                         <h3>${item.nome}</h3>
                         <p>R$ ${item.preco.toFixed(2)}</p>
-                        <p><strong>${item.disponivel ? 'Disponível ✅' : 'Esgotado ❌'}</strong></p>
+                        <p><strong>${item.disponivel ? 'Disponível ✅' : 'Esgotado no Momento ❌'}</strong></p>
                     </div>
-                    <button ${!item.disponivel ? 'disabled' : ''} onclick="fazerPedido(${item.id})">Pedir</button>
+                    <button class="btn-acao" ${!item.disponivel ? 'disabled' : ''} onclick="fazerPedido(${item.id})">Pedir</button>
                 `;
                 container.appendChild(div);
             });
-        });
-
-        function fazerPedido(id) {
-            alert('Pedido enviado com sucesso! O restaurante já vai receber.');
-            socket.emit('novo_pedido', { produtoId: id, cliente: 'Cliente Teste' });
         }
 
-        // Registra o Service Worker para transformar em PWA instalável
+        function renderizarCardapioAdmin() {
+            const container = document.getElementById('admin-cardapio');
+            container.innerHTML = '';
+
+            cardapioGlobal.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <img src="${item.imagem}" alt="${item.nome}">
+                    <div class="info">
+                        <h3>${item.nome}</h3>
+                        <p>Status: <strong>${item.disponivel ? 'Ligado (Disponível)' : 'Desligado (Indisponível)'}</strong></p>
+                    </div>
+                    <button class="btn-acao" style="background: ${item.disponivel ? '#eb4d4b' : '#2ed573'};" onclick="mudarDisponibilidade(${item.id})">
+                        ${item.disponivel ? 'Desligar Prato' : 'Ligar Prato'}
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function fazerPedido(id) {
+            const item = cardapioGlobal.find(p => p.id === id);
+            if (!item) return;
+
+            const nomeCliente = prompt("Digite seu nome para o pedido:", "Cliente");
+            if (!nomeCliente) return;
+
+            socket.emit('novo_pedido', {
+                cliente: nomeCliente,
+                itens: [item.nome],
+                total: item.preco
+            });
+            alert('Pedido enviado com sucesso! Acompanhe o status na aba inferior.');
+        }
+
+        function mudarDisponibilidade(id) {
+            socket.emit('mudar_disponibilidade', id);
+        }
+
+        function renderizarPedidosAdmin() {
+            const container = document.getElementById('admin-pedidos');
+            if (pedidosGlobal.length === 0) {
+                container.innerHTML = '<p>Nenhum pedido no momento.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            pedidosGlobal.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'pedido-box';
+                div.innerHTML = `
+                    <p><strong>Cliente:</strong> ${p.cliente} | <strong>Item:</strong> ${p.itens.join(', ')}</p>
+                    <p><strong>Total:</strong> R$ ${p.total.toFixed(2)}</p>
+                    <p><strong>Status Atual:</strong> <span class="status-badge">${p.status}</span></p>
+                    <p><strong>Tempo de Preparo Estimado:</strong> ${p.tempoPreparo}</p>
+                    <div style="margin-top: 10px;">
+                        <button onclick="atualizarStatus(${p.id}, 'Preparando', prompt('Informe o tempo estimado (ex: 30 min):', '30 min'))">Definir como Preparando</button>
+                        <button onclick="atualizarStatus(${p.id}, 'Saiu para Entrega', '')" style="background:#1e90ff; color:white;">Saiu para Entrega 🛵</button>
+                        <button onclick="atualizarStatus(${p.id}, 'Concluído', '')" style="background:#2ed573; color:white;">Concluído ✅</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderizarPedidosCliente() {
+            const container = document.getElementById('meus-pedidos');
+            if (pedidosGlobal.length === 0) {
+                container.innerHTML = '<p>Nenhum pedido recente.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            pedidosGlobal.slice(-2).forEach(p => { // Mostra os últimos pedidos
+                let classeStatus = '';
+                if (p.status === 'Saiu para Entrega') classeStatus = 'status-saiu';
+                if (p.status === 'Concluído') classeStatus = 'status-concluido';
+
+                let htmlAvaliacao = '';
+                if (p.status === 'Concluído') {
+                    if (p.avaliacao) {
+                        htmlAvaliacao = `<p>⭐ Sua Avaliação: ${p.avaliacao} estrelas - "${p.comentarioAvaliacao}"</p>`;
+                    } else {
+                        htmlAvaliacao = `
+                            <div style="margin-top:10px; background:#f1f2f6; padding:10px; border-radius:5px;">
+                                <p><strong>O pedido foi entregue! O que achou do atendimento?</strong></p>
+                                <button onclick="avaliar(${p.id}, 5, 'Excelente!')">⭐⭐⭐⭐⭐</button>
+                                <button onclick="avaliar(${p.id}, 3, 'Bom')">⭐⭐⭐</button>
+                                <button onclick="avaliar(${p.id}, 1, 'Ruim')">⭐</button>
+                            </div>
+                        `;
+                    }
+                }
+
+                const div = document.createElement('div');
+                div.className = 'pedido-box';
+                div.innerHTML = `
+                    <p><strong>Pedido #${p.id.toString().slice(-4)}</strong> - ${p.itens.join(', ')}</p>
+                    <p>Status: <span class="status-badge ${classeStatus}">${p.status}</span></p>
+                    <p>Tempo de Preparo: <strong>${p.tempoPreparo}</strong></p>
+                    ${htmlAvaliacao}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function atualizarStatus(idPedido, status, tempo) {
+            socket.emit('atualizar_status', { idPedido, status, tempoPreparo: tempo });
+        }
+
+        function avaliar(idPedido, nota, comentario) {
+            socket.emit('avaliar_pedido', { idPedido, nota, comentario });
+            alert('Obrigado pela sua avaliação!');
+        }
+
+        function alternarModoAdmin() {
+            const senha = prompt("Digite a senha de Administrador:");
+            if (senha === "1234") { // Senha simples para o teste gratuito
+                const telaCliente = document.getElementById('tela-cliente');
+                const telaAdmin = document.getElementById('tela-admin');
+                if (telaAdmin.style.display === 'block') {
+                    telaAdmin.style.display = 'none';
+                    telaCliente.style.display = 'block';
+                } else {
+                    telaAdmin.style.display = 'block';
+                    telaCliente.style.display = 'none';
+                }
+            } else if (senha !== null) {
+                alert("Senha incorreta!");
+            }
+        }
+
+        function mudarAba(aba) {
+            document.getElementById('nav-cliente').classList.remove('ativo');
+            document.getElementById('nav-status').classList.remove('ativo');
+            if (aba === 'cliente') document.getElementById('nav-cliente').classList.add('ativo');
+            if (aba === 'status') document.getElementById('nav-status').classList.add('ativo');
+        }
+
+        // PWA Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('PWA configurado com sucesso!'));
+            navigator.serviceWorker.register('sw.js').catch(() => {});
         }
     </script>
 </body>
