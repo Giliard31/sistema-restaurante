@@ -13,7 +13,7 @@
         .card img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; margin-right: 12px; }
         .info { flex-grow: 1; }
         .indisponivel { opacity: 0.5; filter: grayscale(100%); }
-        button.btn-acao { background: #ff4757; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button.btn-acao { background: #ff4757; color: white; border: none; padding: 10px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         .tela { display: none; }
         .ativa { display: block; }
@@ -25,6 +25,11 @@
         .status-saiu { background: #1e90ff; }
         #banner-instalacao { background: #2f3542; color: white; padding: 10px 15px; text-align: center; font-size: 14px; display: none; }
         #banner-instalacao button { background: #ff4757; border: none; color: white; padding: 5px 10px; margin-left: 10px; border-radius: 4px; cursor: pointer; }
+        
+        /* Caixa de login/cadastro elegante */
+        .box-auth { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-top: 20px; }
+        .link-toggle { color: #ff4757; cursor: pointer; text-align: center; display: block; margin-top: 15px; font-weight: bold; font-size: 14px; }
+        .secao-cadastro { display: none; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
     </style>
 </head>
 <body>
@@ -39,32 +44,41 @@
         <span id="titulo-topo">🍔 Delícias da Casa</span>
     </header>
 
-    <!-- TELA 1: LOGIN / CADASTRO UNIFICADO -->
+    <!-- TELA 1: LOGIN / CADASTRO LIMPO E OCULTO -->
     <div id="tela-login" class="container tela ativa">
-        <h2 style="text-align: center; color: #ff4757;">Bem-vindo ao Delivery!</h2>
-        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <h3>Entrar na sua conta</h3>
-            <p style="font-size: 12px; color: #666;">(Admin: digite seu e-mail como administrador@nomedoaplicativo)</p>
+        <div class="box-auth">
+            <h2 style="text-align: center; color: #ff4757; margin-top: 0;">Faça o seu Login</h2>
+            
             <input type="email" id="login-email" placeholder="Seu e-mail">
             <input type="password" id="login-senha" placeholder="Sua senha">
-            <button class="btn-acao" style="width: 100%; margin-top: 10px;" onclick="fazerLogin()">Entrar</button>
             
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+            <div style="display: flex; align-items: center; margin: 10px 0; font-size: 14px; color: #555;">
+                <input type="checkbox" id="lembrar-senha" style="width: auto; margin-right: 8px;">
+                <label for="lembrar-senha">Manter conectado (Salvar senha)</label>
+            </div>
+
+            <button class="btn-acao" onclick="fazerLogin()">Entrar</button>
             
-            <h3>Ainda não tem conta? Cadastre-se</h3>
-            <input type="text" id="cad-nome" placeholder="Seu Nome Completo">
-            <input type="text" id="cad-tel" placeholder="Seu Telefone / WhatsApp">
-            <input type="text" id="cad-end" placeholder="Seu Endereço de Entrega">
-            <input type="email" id="cad-email" placeholder="Seu e-mail (Ex: cliente@email.com)">
-            <input type="password" id="cad-senha" placeholder="Crie uma senha">
-            <button class="btn-acao" style="width: 100%; background: #2ed573; margin-top: 10px;" onclick="fazerCadastro()">Criar Conta</button>
+            <!-- Botão para abrir o cadastro oculto -->
+            <span class="link-toggle" id="btn-toggle-cadastro" onclick="alternarCadastro()">Não tem uma conta? Clique aqui para criar</span>
+
+            <!-- Formulário de Novo Cadastro (Oculto inicialmente) -->
+            <div id="bloco-cadastro" class="secao-cadastro">
+                <h3 style="color: #333; font-size: 16px; margin-bottom: 10px;">Criar Nova Conta</h3>
+                <input type="text" id="cad-nome" placeholder="Seu Nome Completo">
+                <input type="text" id="cad-tel" placeholder="Seu Telefone / WhatsApp">
+                <input type="text" id="cad-end" placeholder="Seu Endereço de Entrega">
+                <input type="email" id="cad-email" placeholder="Seu e-mail">
+                <input type="password" id="cad-senha" placeholder="Crie uma senha">
+                <button class="btn-acao" style="background: #2ed573; margin-top: 10px;" onclick="fazerCadastro()">Salvar e Entrar</button>
+            </div>
         </div>
     </div>
 
     <!-- TELA 2: CARDÁPIO DO CLIENTE -->
     <div id="tela-cardapio" class="container tela">
         <h2>Cardápio Disponível</h2>
-        <button onclick="fazerLogout()" style="background:#666; color:white; border:none; padding:5px 10px; border-radius:4px; margin-bottom:10px; cursor:pointer;">Sair da Conta</button>
+        <button onclick="fazerLogout()" style="background:#666; color:white; border:none; padding:8px 12px; border-radius:5px; margin-bottom:15px; cursor:pointer;">Sair da Conta</button>
         <div id="lista-cardapio">Carregando cardápio...</div>
         <h2 style="margin-top: 30px;">Meus Pedidos</h2>
         <div id="meus-pedidos">Nenhum pedido recente.</div>
@@ -90,7 +104,6 @@
     <!-- Socket.io -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
-        // ATENÇÃO: Substitua pelo link oficial do seu backend no Render
         const SOCKET_URL = 'https://sistema-restaurante-rn2m.onrender.com/';
         const socket = io(SOCKET_URL);
 
@@ -106,16 +119,33 @@
             document.getElementById(idTela).classList.add('ativa');
         }
 
-        // Verifica se já está logado ao abrir o app pelo ícone
+        // Verifica se já está salvo (Lembrar senha / Sessão ativa)
         window.onload = () => {
+            const salvoEmail = localStorage.getItem('salvo_email');
+            const salvoSenha = localStorage.getItem('salvo_senha');
+            if (salvoEmail && salvoSenha) {
+                document.getElementById('login-email').value = salvoEmail;
+                document.getElementById('login-senha').value = salvoSenha;
+                document.getElementById('lembrar-senha').checked = true;
+            }
+
             if (usuarioLogado) {
-                if (tipoUsuario === 'admin') {
-                    mudarTela('tela-admin');
-                } else {
-                    mudarTela('tela-cardapio');
-                }
+                mudarTela(tipoUsuario === 'admin' ? 'tela-admin' : 'tela-cardapio');
             }
         };
+
+        // Mostra ou oculta o bloco de cadastro
+        function alternarCadastro() {
+            const bloco = document.getElementById('bloco-cadastro');
+            const link = document.getElementById('btn-toggle-cadastro');
+            if (bloco.style.display === 'block') {
+                bloco.style.display = 'none';
+                link.innerText = 'Não tem uma conta? Clique aqui para criar';
+            } else {
+                bloco.style.display = 'block';
+                link.innerText = 'Já tem uma conta? Faça o login';
+            }
+        }
 
         function fazerCadastro() {
             const dados = {
@@ -126,7 +156,7 @@
                 senha: document.getElementById('cad-senha').value
             };
             if(!dados.nome || !dados.email || !dados.senha) {
-                alert('Preencha todos os campos obrigatórios!');
+                alert('Preencha os campos obrigatórios!');
                 return;
             }
             socket.emit('cadastrar_usuario', dados, (res) => {
@@ -142,16 +172,28 @@
         }
 
         function fazerLogin() {
-            const dados = {
-                email: document.getElementById('login-email').value,
-                senha: document.getElementById('login-senha').value
-            };
+            const emailInput = document.getElementById('login-email').value;
+            const senhaInput = document.getElementById('login-senha').value;
+            const lembrar = document.getElementById('lembrar-senha').checked;
+
+            const dados = { email: emailInput, senha: senhaInput };
+
             socket.emit('login_usuario', dados, (res) => {
                 if(res.sucesso) {
                     usuarioLogado = res.usuario;
                     tipoUsuario = res.tipo;
                     localStorage.setItem('usuario_delivery', JSON.stringify(usuarioLogado));
                     localStorage.setItem('tipo_usuario', tipoUsuario);
+
+                    // Gerenciar "Manter conectado"
+                    if (lembrar) {
+                        localStorage.setItem('salvo_email', emailInput);
+                        localStorage.setItem('salvo_senha', senhaInput);
+                    } else {
+                        localStorage.removeItem('salvo_email');
+                        localStorage.removeItem('salvo_senha');
+                    }
+
                     mudarTela(tipoUsuario === 'admin' ? 'tela-admin' : 'tela-cardapio');
                 } else {
                     alert(res.mensagem);
@@ -164,6 +206,7 @@
             localStorage.removeItem('tipo_usuario');
             usuarioLogado = null;
             tipoUsuario = null;
+            document.getElementById('login-senha').value = '';
             mudarTela('tela-login');
         }
 
@@ -192,7 +235,7 @@
                         <p>R$ ${item.preco.toFixed(2)}</p>
                         <p><strong>${item.disponivel ? 'Disponível ✅' : 'Esgotado ❌'}</strong></p>
                     </div>
-                    <button class="btn-acao" ${!item.disponivel ? 'disabled' : ''} onclick="adicionarCarrinho(${item.id})">+ Adicionar</button>
+                    <button style="width: auto; padding: 8px 12px;" class="btn-acao" ${!item.disponivel ? 'disabled' : ''} onclick="adicionarCarrinho(${item.id})">+ Adicionar</button>
                 `;
                 container.appendChild(div);
             });
@@ -294,7 +337,7 @@
                         <h3>${item.nome}</h3>
                         <p>Status: <strong>${item.disponivel ? 'Ligado ✅' : 'Desligado ❌'}</strong></p>
                     </div>
-                    <button class="btn-acao" style="background:${item.disponivel?'#eb4d4b':'#2ed573'};" onclick="socket.emit('mudar_disponibilidade', ${item.id})">
+                    <button style="width: auto; padding: 8px 12px; background:${item.disponivel?'#eb4d4b':'#2ed573'};" class="btn-acao" onclick="socket.emit('mudar_disponibilidade', ${item.id})">
                         ${item.disponivel ? 'Desligar' : 'Ligar'}
                     </button>
                 `;
@@ -318,10 +361,10 @@
                     <p><strong>Itens:</strong> ${p.itens.join(', ')} | <strong>Total:</strong> R$ ${p.total.toFixed(2)}</p>
                     <p><strong>Pagamento:</strong> ${p.pagamento}</p>
                     <p><strong>Status:</strong> <span class="status-badge">${p.status}</span></p>
-                    <div style="margin-top:10px;">
-                        <button onclick="atualizarStatus(${p.id}, 'Preparando', prompt('Tempo estimado (ex: 30 min):','30 min'))">Preparando</button>
-                        <button onclick="atualizarStatus(${p.id}, 'Saiu para Entrega', '')" style="background:#1e90ff; color:white;">Saiu 🛵</button>
-                        <button onclick="atualizarStatus(${p.id}, 'Concluído', '')" style="background:#2ed573; color:white;">Concluído ✅</button>
+                    <div style="margin-top:10px; display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button style="width: auto; padding: 6px 10px;" onclick="atualizarStatus(${p.id}, 'Preparando', prompt('Tempo estimado (ex: 30 min):','30 min'))">Preparando</button>
+                        <button style="width: auto; padding: 6px 10px; background:#1e90ff; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="atualizarStatus(${p.id}, 'Saiu para Entrega', '')">Saiu 🛵</button>
+                        <button style="width: auto; padding: 6px 10px; background:#2ed573; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="atualizarStatus(${p.id}, 'Concluído', '')">Concluído ✅</button>
                     </div>
                 `;
                 container.appendChild(div);
