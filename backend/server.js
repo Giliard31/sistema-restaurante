@@ -23,14 +23,16 @@ let cardapio = [
 
 let usuarios = [];
 let pedidos = [];
+let configuracoesLoja = { taxaEntrega: 5.00 }; // Taxa de entrega padrão
 
 io.on('connection', (socket) => {
   console.log('Usuário conectado:', socket.id);
 
   socket.emit('atualizar_cardapio', cardapio);
   socket.emit('atualizar_pedidos', pedidos);
+  socket.emit('atualizar_config', configuracoesLoja);
 
-  // Cadastro de Novo Usuário (Cliente ou Admin)
+  // Cadastro de Novo Usuário (com bairro e referência)
   socket.on('cadastrar_usuario', (dados, callback) => {
     const existe = usuarios.find(u => u.email === dados.email);
     if (existe) {
@@ -41,13 +43,11 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Login Unificado (Cliente ou Admin via administrador@...)
+  // Login
   socket.on('login_usuario', (dados, callback) => {
-    // Verifica se é o Admin (começa com administrador@)
     if (dados.email.startsWith('administrador@')) {
-      // Aqui você define a senha padrão do admin ou valida com os cadastrados
       const adminCadastrado = usuarios.find(u => u.email === dados.email && u.senha === dados.senha);
-      if (adminCadastrado || dados.senha === '123456') { // Senha mestre opcional '123456' para emergência
+      if (adminCadastrado || dados.senha === '123456') {
         callback({ sucesso: true, tipo: 'admin', usuario: { nome: 'Administrador' } });
         return;
       } else {
@@ -56,7 +56,6 @@ io.on('connection', (socket) => {
       }
     }
 
-    // Login normal de cliente
     const user = usuarios.find(u => u.email === dados.email && u.senha === dados.senha);
     if (user) {
       callback({ sucesso: true, tipo: 'cliente', usuario: user });
@@ -65,7 +64,43 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Admin altera disponibilidade de prato
+  // Recuperação de Senha ("Esqueci minha senha")
+  socket.on('recuperar_senha', (email, callback) => {
+    const user = usuarios.find(u => u.email === email);
+    if (user) {
+      // Para testes grátis sem servidor de e-mail pago, geramos um código provisório de redefinição
+      const codigoTemp = Math.floor(1000 + Math.random() * 9000);
+      user.codigoRecuperacao = codigoTemp.toString();
+      callback({ sucesso: true, mensagem: `Código de recuperação gerado para testes: ${codigoTemp}\n(Em produção real, isso chegaria por e-mail).` });
+    } else {
+      callback({ sucesso: false, mensagem: 'E-mail não encontrado em nossa base de cadastros.' });
+    }
+  });
+
+  socket.on('redefinir_senha', ({ email, codigo, novaSenha }, callback) => {
+    const user = usuarios.find(u => u.email === email);
+    if (user && user.codigoRecuperacao === codigo) {
+      user.senha = novaSenha;
+      user.codigoRecuperacao = null;
+      callback({ sucesso: true, mensagem: 'Senha redefinida com sucesso! Faça login com a nova senha.' });
+    } else {
+      callback({ sucesso: false, mensagem: 'Código inválido ou e-mail incorreto.' });
+    }
+  });
+
+  // --- GERENCIAMENTO DE CARDÁPIO PELO ADMIN ---
+  socket.on('adicionar_prato', (novoItem) => {
+    novoItem.id = Date.now();
+    novoItem.disponivel = true;
+    cardapio.push(novoItem);
+    io.emit('atualizar_cardapio', cardapio);
+  });
+
+  socket.on('remover_prato', (id) => {
+    cardapio = cardapio.filter(p => p.id !== id);
+    io.emit('atualizar_cardapio', cardapio);
+  });
+
   socket.on('mudar_disponibilidade', (id) => {
     const item = cardapio.find(p => p.id === id);
     if (item) {
@@ -74,14 +109,24 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Cliente faz um novo pedido
+  // Atualizar Taxa de Entrega
+  socket.on('atualizar_taxa', (novaTaxa) => {
+    configuracoesLoja.taxaEntrega = parseFloat(novaTaxa);
+    io.emit('atualizar_config', configuracoesLoja);
+  });
+
+  // Cliente faz um novo pedido (incluindo taxa de entrega, bairro e referência)
   socket.on('novo_pedido', (dadosPedido) => {
     const novoPedido = {
       id: Date.now(),
       cliente: dadosPedido.cliente,
       telefone: dadosPedido.telefone,
       endereco: dadosPedido.endereco,
+      bairro: dadosPedido.bairro,
+      referencia: dadosPedido.referencia,
       itens: dadosPedido.itens,
+      subtotal: dadosPedido.subtotal,
+      taxaEntrega: dadosPedido.taxaEntrega,
       total: dadosPedido.total,
       pagamento: dadosPedido.pagamento,
       status: 'Pendente',
@@ -93,7 +138,6 @@ io.on('connection', (socket) => {
     io.emit('atualizar_pedidos', pedidos);
   });
 
-  // Admin atualiza status do pedido
   socket.on('atualizar_status', ({ idPedido, status, tempoPreparo }) => {
     const pedido = pedidos.find(p => p.id === idPedido);
     if (pedido) {
@@ -103,7 +147,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Cliente avalia o pedido
   socket.on('avaliar_pedido', ({ idPedido, nota, comentario }) => {
     const pedido = pedidos.find(p => p.id === idPedido);
     if (pedido) {
