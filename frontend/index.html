@@ -30,7 +30,7 @@
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         // ATENCAO: Quando subir o backend no Render, troque o link abaixo pelo link do seu servidor do Render
-        const socket = io('http://localhost:3000');
+        const socket = io('https://sistema-restaurante-rn2m.onrender.com/');
 
         socket.on('atualizar_cardapio', (cardapio) => {
             const container = document.getElementById('lista-cardapio');
